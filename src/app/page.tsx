@@ -173,6 +173,7 @@ export default function Home() {
              confidence={inference.confidence} 
              reasoning={inference.reasoning}
              logs={inference.logs}
+             resources={inference.resources}
           />
           
           <div className="mt-4 p-4 rounded-xl border border-border-card bg-back-panel/40 space-y-3 shadow-inner">

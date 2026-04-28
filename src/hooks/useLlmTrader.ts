@@ -16,6 +16,7 @@ export interface LlmTraderData {
   isLiquiditySweep: boolean;
   hasCHoCH: boolean;
   validSetup: boolean;
+  resources: { rss: string; heapUsed: string } | null;
 }
 
 export function useLlmTrader(chartTimeframe: string = '5m') {
@@ -30,6 +31,7 @@ export function useLlmTrader(chartTimeframe: string = '5m') {
     isLiquiditySweep: false,
     hasCHoCH: false,
     validSetup: false,
+    resources: null,
   });
   
   const [newsEvents, setNewsEvents] = useState<NewsEvent[]>([]);
@@ -215,6 +217,32 @@ export function useLlmTrader(chartTimeframe: string = '5m') {
       }
     }
 
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const json = await res.json();
+        const serverEST = json.serverTimeEST;
+        const localTime = new Date().toLocaleTimeString();
+        appendLog(`[System] Server Time (EST): ${serverEST}`);
+        appendLog(`[System] Local Time: ${localTime}`);
+        
+        if (json.resources) {
+          commitState({ resources: { rss: json.resources.rss, heapUsed: json.resources.heapUsed } });
+        }
+        
+        if (!json.environment.gemini_key) {
+          appendLog('[CRITICAL ERROR] GEMINI_API_KEY is missing from environment!');
+          commitState({ bias: 'CONFIG ERROR', reasoning: 'CRITICAL: GEMINI_API_KEY NOT FOUND' });
+        }
+        if (!json.environment.deriv_token) {
+          appendLog('[System] Warning: No DERIV_API_TOKEN found in server env. Using UI-provided token.');
+        }
+      } catch (err) {
+        console.error('Health check failed', err);
+      }
+    }
+
+    checkHealth();
     fetchNews();
     runPipeline();
     const interval = setInterval(runPipeline, 5000);

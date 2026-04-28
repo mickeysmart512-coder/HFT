@@ -7,10 +7,11 @@ interface TelemetryPanelProps {
   confidence: number;
   reasoning?: string;
   logs: string[];
+  resources: { rss: string; heapUsed: string } | null;
   className?: string;
 }
 
-export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, className }: TelemetryPanelProps) {
+export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, resources, className }: TelemetryPanelProps) {
   
   // Dynamic color derivation
   let signalColorClass = "text-fore-muted bg-fore-muted/10 border-fore-muted/30";
@@ -105,6 +106,30 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, clas
         </div>
         <div className="mt-4 text-[10px] font-mono text-fore-muted/60 text-center uppercase tracking-widest">
           {confidence > 0 ? "LIVE INFERENCE" : "Awaiting Data..."}
+        </div>
+      </div>
+
+      {/* Resource Metrics Card */}
+      <div className="flex flex-col flex-none p-4 rounded-xl border border-border-card bg-back-panel/20 shadow-inner">
+        <h3 className="text-[10px] font-semibold text-fore-muted uppercase tracking-widest mb-3">Resource Metrics (Render)</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-[9px] text-fore-muted uppercase">RAM Usage</span>
+            <span className="font-mono text-xs text-brand-neon font-bold">{resources?.rss || '---'}</span>
+          </div>
+          <div className="flex flex-col gap-1 text-right">
+            <span className="text-[9px] text-fore-muted uppercase">Heap Used</span>
+            <span className="font-mono text-xs text-brand-blue font-bold">{resources?.heapUsed || '---'}</span>
+          </div>
+        </div>
+        <div className="mt-3 w-full h-1 bg-back-base rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-brand-neon/40 transition-all duration-1000"
+            style={{ width: resources ? `${Math.min(100, (parseInt(resources.rss) / 512) * 100)}%` : '0%' }}
+          ></div>
+        </div>
+        <div className="mt-1 text-[8px] text-fore-muted/40 text-center uppercase">
+          Limit: 512MB
         </div>
       </div>
 
