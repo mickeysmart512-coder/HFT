@@ -17,8 +17,8 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, reso
   
   // News logic for countdowns
   const now = new Date();
-  const upcomingUSD = newsEvents
-    .filter(e => new Date(e.date) > now)
+  const upcomingHighImpact = newsEvents
+    .filter(e => new Date(e.date) > now && e.impact === 'High')
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
 
@@ -136,63 +136,58 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, reso
         </div>
       </div>
 
-      {/* Resource Metrics Card */}
-      <div className="flex flex-col flex-none p-4 rounded-xl border border-border-card bg-back-panel/20 shadow-inner">
-        <h3 className="text-[10px] font-semibold text-fore-muted uppercase tracking-widest mb-3">Resource Metrics (Render)</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-[9px] text-fore-muted uppercase">RAM Usage</span>
-            <span className="font-mono text-xs text-brand-neon font-bold">{resources?.rss || '---'}</span>
+      {/* Resource & News Group */}
+      <div className="flex flex-col gap-4 flex-none">
+        {/* Resource Metrics Card */}
+        <div className="flex flex-col p-4 rounded-xl border border-border-card bg-back-panel/20 shadow-inner">
+          <h3 className="text-[10px] font-semibold text-fore-muted uppercase tracking-widest mb-3">Resource Metrics (Render)</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-[9px] text-fore-muted uppercase">RAM Usage</span>
+              <span className="font-mono text-xs text-brand-neon font-bold">{resources?.rss || '---'}</span>
+            </div>
+            <div className="flex flex-col gap-1 text-right">
+              <span className="text-[9px] text-fore-muted uppercase">Heap Used</span>
+              <span className="font-mono text-xs text-brand-blue font-bold">{resources?.heapUsed || '---'}</span>
+            </div>
           </div>
-          <div className="flex flex-col gap-1 text-right">
-            <span className="text-[9px] text-fore-muted uppercase">Heap Used</span>
-            <span className="font-mono text-xs text-brand-blue font-bold">{resources?.heapUsed || '---'}</span>
+          <div className="mt-3 w-full h-1 bg-back-base rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-brand-neon/40 transition-all duration-1000"
+              style={{ width: resources ? `${Math.min(100, (parseInt(resources.rss) / 512) * 100)}%` : '0%' }}
+            ></div>
           </div>
         </div>
-        <div className="mt-3 w-full h-1 bg-back-base rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-brand-neon/40 transition-all duration-1000"
-            style={{ width: resources ? `${Math.min(100, (parseInt(resources.rss) / 512) * 100)}%` : '0%' }}
-          ></div>
-        </div>
-        <div className="mt-1 text-[8px] text-fore-muted/40 text-center uppercase">
-          Limit: 512MB
-        </div>
-      </div>
 
-      {/* Upcoming News Widget */}
-      <div className="flex flex-col flex-none p-4 rounded-xl border border-border-card bg-back-card/60 shadow-lg relative overflow-hidden group">
-        <div className="flex items-center gap-2 mb-3 border-b border-border-card pb-2">
-          <CalendarDays className="w-4 h-4 text-brand-neon" />
-          <h3 className="text-[10px] font-semibold text-fore-muted uppercase tracking-widest">Upcoming News</h3>
-        </div>
-        <div className="space-y-3">
-          {upcomingUSD.length === 0 ? (
-            <div className="text-[10px] text-fore-muted/40 font-mono py-2 text-center">No upcoming USD events</div>
-          ) : (
-            upcomingUSD.map((event, i) => {
-              let impactColor = "text-gray-400";
-              let impactBg = "bg-gray-400/10";
-              if (event.impact === 'High') { impactColor = "text-brand-red"; impactBg = "bg-brand-red/10"; }
-              if (event.impact === 'Medium') { impactColor = "text-orange-400"; impactBg = "bg-orange-400/10"; }
-
-              return (
-                <div key={i} className="flex flex-col gap-1">
-                  <div className="flex items-center justify-between">
-                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-bold uppercase", impactColor, impactBg)}>
-                      {event.impact}
-                    </span>
-                    <span className="text-[10px] font-mono text-brand-neon font-bold">
-                      {event.title} in {getCountdown(event.date)}
-                    </span>
+        {/* Upcoming News Widget */}
+        <div className="flex flex-col p-4 rounded-xl border border-border-card bg-back-card/60 shadow-lg relative overflow-hidden group">
+          <div className="flex items-center gap-2 mb-3 border-b border-border-card pb-2">
+            <CalendarDays className="w-4 h-4 text-brand-neon" />
+            <h3 className="text-[10px] font-semibold text-fore-muted uppercase tracking-widest">Upcoming Market Events</h3>
+          </div>
+          <div className="space-y-3">
+            {upcomingHighImpact.length === 0 ? (
+              <div className="text-[10px] text-fore-muted/40 font-mono py-2 text-center uppercase tracking-tighter">No High-Impact News Scheduled</div>
+            ) : (
+              upcomingHighImpact.map((event, i) => {
+                return (
+                  <div key={i} className="flex flex-col gap-1 border-l-2 border-brand-red pl-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-bold uppercase text-brand-red bg-brand-red/10">
+                        {event.impact}
+                      </span>
+                      <span className="text-[10px] font-mono text-brand-neon font-bold">
+                        {event.title} in {getCountdown(event.date)}
+                      </span>
+                    </div>
+                    <div className="text-[9px] text-fore-muted/60 font-mono truncate">
+                      {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {event.title}
+                    </div>
                   </div>
-                  <div className="text-[9px] text-fore-muted/60 font-mono truncate pl-1">
-                    {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {event.title}
-                  </div>
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 

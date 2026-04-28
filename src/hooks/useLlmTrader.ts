@@ -101,6 +101,12 @@ export function useLlmTrader(chartTimeframe: string = '5m') {
         if (lastClosedTimeRef.current === null) {
           lastClosedTimeRef.current = latestClosedTime;
           appendLog('Synchronized to current 5-minute candle.');
+          
+          // Immediate transition from CALC... to session status
+          const sessionTiming = isTradingSessionValid();
+          commitState({ 
+            bias: sessionTiming.isValid ? 'ANALYZING' : sessionTiming.statusMsg 
+          });
           return;
         }
 

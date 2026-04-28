@@ -15,6 +15,9 @@ interface TopBarProps {
 
 export function TopBar({ price, balance = 0, status, errorMsg, onCommit, className }: TopBarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+  const [secondsAgo, setSecondsAgo] = useState(0);
+  const [pulse, setPulse] = useState(false);
   const [settings, setSettings] = useState({
     token: '',
     symbol: 'OTCIXNDX',
@@ -33,6 +36,22 @@ export function TopBar({ price, balance = 0, status, errorMsg, onCommit, classNa
       }
     }
   }, []);
+  
+  useEffect(() => {
+    if (price) {
+      setLastUpdate(Date.now());
+      setPulse(true);
+      const t = setTimeout(() => setPulse(false), 500);
+      return () => clearTimeout(t);
+    }
+  }, [price]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSecondsAgo(Math.floor((Date.now() - lastUpdate) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lastUpdate]);
 
   const saveSettings = (newSettings: typeof settings) => {
     setSettings(newSettings);
@@ -57,11 +76,21 @@ export function TopBar({ price, balance = 0, status, errorMsg, onCommit, classNa
       </div>
 
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 bg-back-base px-4 py-2 rounded-md border border-border-card shadow-inner">
-          <Activity className="w-4 h-4 text-brand-red animate-pulse" />
-          <span className="font-mono text-xs tracking-wider text-brand-neon font-medium">
-            NAS100: <span className="text-fore-base">{price ? `$${price.toFixed(2)}` : '$---'}</span>
-          </span>
+        <div className="flex items-center gap-2 bg-back-base px-4 py-2 rounded-md border border-border-card shadow-inner relative overflow-hidden">
+          <div className={cn(
+            "absolute top-0 left-0 w-1 h-full bg-brand-green transition-opacity duration-300",
+            pulse ? "opacity-100" : "opacity-0"
+          )}></div>
+          <Activity className={cn("w-4 h-4 transition-colors", pulse ? "text-brand-green" : "text-brand-red opacity-40")} />
+          <div className="flex flex-col">
+            <span className="font-mono text-[10px] tracking-wider text-brand-neon font-bold uppercase">
+              NAS100: <span className="text-fore-base">{price ? `$${price.toFixed(2)}` : '$---'}</span>
+            </span>
+            <span className="text-[8px] text-fore-muted/60 font-mono uppercase tracking-tighter">
+              Updated: {secondsAgo}s ago
+            </span>
+          </div>
+          {pulse && <div className="w-1.5 h-1.5 rounded-full bg-brand-green animate-ping absolute right-2"></div>}
         </div>
         
         <div className="flex items-center gap-2 bg-back-base px-4 py-2 rounded-md border border-border-card shadow-inner">
