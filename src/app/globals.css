@@ -1,0 +1,46 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-neon: #00ffcc;
+  --color-brand-blue: #2563eb;
+  --color-brand-red: #ef4444;
+  --color-brand-green: #22c55e;
+  
+  --color-back-base: #050505;
+  --color-back-panel: #111111;
+  --color-back-card: #181818;
+  --color-fore-base: #f8fafc;
+  --color-fore-muted: #94a3b8;
+  --color-border-card: #262626;
+  
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+:root {
+  --background: var(--color-back-base);
+  --foreground: var(--color-fore-base);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, sans-serif;
+  overflow: hidden; /* It's a dashboard, we handle scroll in panels */
+}
+
+/* Custom Scrollbar for a premium feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-back-card);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border-card);
+}
