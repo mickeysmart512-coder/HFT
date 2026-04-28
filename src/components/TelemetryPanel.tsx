@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { BrainCircuit, RadioReceiver, ShieldAlert, TerminalSquare } from "lucide-react";
+import { BrainCircuit, RadioReceiver, ShieldAlert, TerminalSquare, AlertTriangle, CalendarDays } from "lucide-react";
+import { NewsEvent } from "@/lib/newsFilter";
 
 interface TelemetryPanelProps {
   bias: string;
@@ -8,10 +9,31 @@ interface TelemetryPanelProps {
   reasoning?: string;
   logs: string[];
   resources: { rss: string; heapUsed: string } | null;
+  newsEvents: NewsEvent[];
   className?: string;
 }
 
-export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, resources, className }: TelemetryPanelProps) {
+export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, resources, newsEvents, className }: TelemetryPanelProps) {
+  
+  // News logic for countdowns
+  const now = new Date();
+  const upcomingUSD = newsEvents
+    .filter(e => new Date(e.date) > now)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(0, 3);
+
+  const isHighImpactLock = newsEvents.some(e => {
+    const diff = Math.abs(new Date(e.date).getTime() - now.getTime());
+    return e.impact === 'High' && diff <= 30 * 60 * 1000;
+  });
+
+  const getCountdown = (dateStr: string) => {
+    const diff = new Date(dateStr).getTime() - now.getTime();
+    if (diff < 0) return 'NOW';
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+  };
   
   // Dynamic color derivation
   let signalColorClass = "text-fore-muted bg-fore-muted/10 border-fore-muted/30";
@@ -29,11 +51,11 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, reso
     pulseColorClass = "bg-brand-red animate-ping";
     biasGlow = "bg-brand-red/10";
     biasText = "text-brand-red/90";
-  } else if (signal.includes('SYSTEM LOCKED')) {
-    signalColorClass = "text-orange-500 bg-orange-500/10 border-orange-500/30 shadow-[0_0_15px_rgba(249,115,22,0.3)]";
-    pulseColorClass = "bg-orange-500 animate-pulse";
-    biasGlow = "bg-orange-500/10";
-    biasText = "text-orange-500";
+  } else if (signal.includes('SYSTEM LOCKED') || isHighImpactLock) {
+    signalColorClass = "text-amber-500 bg-amber-500/10 border-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.3)] animate-pulse";
+    pulseColorClass = "bg-amber-500 animate-ping";
+    biasGlow = "bg-amber-500/10";
+    biasText = "text-amber-500 font-bold";
   } else if (signal === 'NEUTRAL' || signal === 'WAIT') {
     signalColorClass = "text-fore-muted bg-fore-muted/10 border-border-card";
     pulseColorClass = "bg-fore-muted animate-pulse";
@@ -79,10 +101,15 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, reso
           </div>
           <div className={cn("w-2 h-2 rounded-full", pulseColorClass)}></div>
         </div>
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-2">
           <div className={cn("px-6 py-2 rounded-sm border font-mono text-xl font-bold tracking-widest transition-all duration-500", signalColorClass)}>
             {signal}
           </div>
+          {isHighImpactLock && (
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-amber-500 uppercase tracking-[0.2em] animate-pulse">
+              <AlertTriangle className="w-3 h-3" /> NEWS LOCK ACTIVE
+            </div>
+          )}
         </div>
       </div>
 
@@ -130,6 +157,42 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, reso
         </div>
         <div className="mt-1 text-[8px] text-fore-muted/40 text-center uppercase">
           Limit: 512MB
+        </div>
+      </div>
+
+      {/* Upcoming News Widget */}
+      <div className="flex flex-col flex-none p-4 rounded-xl border border-border-card bg-back-card/60 shadow-lg relative overflow-hidden group">
+        <div className="flex items-center gap-2 mb-3 border-b border-border-card pb-2">
+          <CalendarDays className="w-4 h-4 text-brand-neon" />
+          <h3 className="text-[10px] font-semibold text-fore-muted uppercase tracking-widest">Upcoming News</h3>
+        </div>
+        <div className="space-y-3">
+          {upcomingUSD.length === 0 ? (
+            <div className="text-[10px] text-fore-muted/40 font-mono py-2 text-center">No upcoming USD events</div>
+          ) : (
+            upcomingUSD.map((event, i) => {
+              let impactColor = "text-gray-400";
+              let impactBg = "bg-gray-400/10";
+              if (event.impact === 'High') { impactColor = "text-brand-red"; impactBg = "bg-brand-red/10"; }
+              if (event.impact === 'Medium') { impactColor = "text-orange-400"; impactBg = "bg-orange-400/10"; }
+
+              return (
+                <div key={i} className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between">
+                    <span className={cn("text-[9px] px-1.5 py-0.5 rounded font-bold uppercase", impactColor, impactBg)}>
+                      {event.impact}
+                    </span>
+                    <span className="text-[10px] font-mono text-brand-neon font-bold">
+                      {event.title} in {getCountdown(event.date)}
+                    </span>
+                  </div>
+                  <div className="text-[9px] text-fore-muted/60 font-mono truncate pl-1">
+                    {new Date(event.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {event.title}
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

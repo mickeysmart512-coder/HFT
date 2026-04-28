@@ -17,6 +17,7 @@ export interface LlmTraderData {
   hasCHoCH: boolean;
   validSetup: boolean;
   resources: { rss: string; heapUsed: string } | null;
+  newsEvents: NewsEvent[];
 }
 
 export function useLlmTrader(chartTimeframe: string = '5m') {
@@ -32,6 +33,7 @@ export function useLlmTrader(chartTimeframe: string = '5m') {
     hasCHoCH: false,
     validSetup: false,
     resources: null,
+    newsEvents: [],
   });
   
   const [newsEvents, setNewsEvents] = useState<NewsEvent[]>([]);
@@ -211,7 +213,10 @@ export function useLlmTrader(chartTimeframe: string = '5m') {
       try {
         const res = await fetch('/api/news');
         const json = await res.json();
-        if (json.events) setNewsEvents(json.events);
+        if (json.events) {
+          setNewsEvents(json.events);
+          commitState({ newsEvents: json.events });
+        }
       } catch (err) {
         console.error('Failed to fetch news:', err);
       }

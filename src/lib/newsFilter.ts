@@ -21,9 +21,8 @@ export async function fetchHighImpactNews(): Promise<NewsEvent[]> {
     
     const data = await response.json();
     
-    // Filter for USD High Impact events
+    // Filter for USD events (all impact levels for UI)
     return data.filter((event: any) => 
-      event.impact === 'High' && 
       event.country === 'USD'
     ).map((event: any) => ({
       title: event.title,
