@@ -18,7 +18,7 @@ export default function Home() {
 
   const inference = useLlmTrader(safeTimeframe);
   const [userSettings, setUserSettings] = useState({ token: '', symbol: 'OTC_NDX' });
-  const deriv = useDerivAccount(userSettings.token, userSettings.symbol);
+  const deriv = useDerivAccount(userSettings.token, userSettings.symbol, inference.addLog);
   
   const lastSignalTime = useRef<number>(0);
 
@@ -115,7 +115,7 @@ export default function Home() {
       {/* Top Navigation */}
       <div className="flex-none z-50 relative">
         <TopBar 
-          price={inference.currentPrice} 
+          price={deriv.activePrice || inference.currentPrice} 
           balance={deriv.balance}
           status={deriv.status}
           errorMsg={deriv.errorMsg}
@@ -166,7 +166,7 @@ export default function Home() {
         </section>
 
         {/* Right: Telemetry Panel */}
-        <aside className="w-80 flex-none h-full overflow-y-auto pr-2 custom-scrollbar">
+        <aside className="w-80 flex-none h-full overflow-hidden">
           <TelemetryPanel 
              bias={inference.bias} 
              signal={inference.signal} 
@@ -175,23 +175,8 @@ export default function Home() {
              logs={inference.logs}
              resources={inference.resources}
              newsEvents={inference.newsEvents}
+             className="h-full"
           />
-          
-          <div className="mt-4 p-4 rounded-xl border border-border-card bg-back-panel/40 space-y-3 shadow-inner">
-             <h3 className="text-[10px] uppercase tracking-widest text-fore-muted font-bold">Metrics Breakdown</h3>
-             <div className="flex justify-between items-center text-xs">
-                <span className="text-fore-muted font-mono">LIQ SWEEP</span>
-                <span className={inference.isLiquiditySweep ? "text-brand-neon font-bold" : "text-fore-muted/30"}>
-                   {inference.isLiquiditySweep ? "DETECTED" : "NULL"}
-                </span>
-             </div>
-             <div className="flex justify-between items-center text-xs">
-                <span className="text-fore-muted font-mono">CHoCH</span>
-                <span className={inference.hasCHoCH ? "text-brand-neon font-bold" : "text-fore-muted/30"}>
-                   {inference.hasCHoCH ? "BREAK" : "NULL"}
-                </span>
-             </div>
-          </div>
         </aside>
 
       </div>

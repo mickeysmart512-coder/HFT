@@ -9,9 +9,10 @@ export interface DerivAccountData {
   tradeHistory: any[];
   status: 'IDLE' | 'AUTH' | 'CONNECTED' | 'ERROR';
   errorMsg: string;
+  activePrice: number | null;
 }
 
-export function useDerivAccount(token: string | null, symbol: string) {
+export function useDerivAccount(token: string | null, symbol: string, onLog?: (msg: string) => void) {
   const [data, setData] = useState<DerivAccountData>({
     balance: 0,
     currency: 'USD',
@@ -19,11 +20,14 @@ export function useDerivAccount(token: string | null, symbol: string) {
     activeTrades: [],
     tradeHistory: [],
     status: 'IDLE',
-    errorMsg: ''
+    errorMsg: '',
+    activePrice: null
   });
 
   const wsRef = useRef<WebSocket | null>(null);
   const beTriggeredRef = useRef<Set<number>>(new Set());
+  const lastPriceRef = useRef<number | null>(null);
+  const lastPriceTimeRef = useRef<number>(Date.now());
 
   const connect = useCallback(async (manualToken?: string) => {
     const activeToken = manualToken || token;
@@ -65,6 +69,8 @@ export function useDerivAccount(token: string | null, symbol: string) {
         ws.send(JSON.stringify({ profit_table: 1 }));
         // Subscribe to all open contract updates
         ws.send(JSON.stringify({ proposal_open_contract: 1, subscribe: 1 }));
+        // Subscribe to ticks for live heartbeat
+        ws.send(JSON.stringify({ ticks: symbol, subscribe: 1 }));
       }
 
       if (res.msg_type === 'balance') {
@@ -123,6 +129,18 @@ export function useDerivAccount(token: string | null, symbol: string) {
           }
         }
       }
+
+      if (res.msg_type === 'tick') {
+        const newPrice = Number(res.tick.quote);
+        
+        // Heartbeat Logic
+        if (newPrice !== lastPriceRef.current) {
+          lastPriceRef.current = newPrice;
+          lastPriceTimeRef.current = Date.now();
+        }
+
+        setData(prev => ({ ...prev, activePrice: newPrice }));
+      }
     };
 
     ws.onerror = () => {
@@ -136,6 +154,19 @@ export function useDerivAccount(token: string | null, symbol: string) {
 
   useEffect(() => {
     if (token) connect();
+
+    const monitor = setInterval(() => {
+      const stagnantTime = Date.now() - lastPriceTimeRef.current;
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && stagnantTime > 30000) {
+        console.warn('[SYSTEM] Heartbeat failure: Reconnecting...');
+        if (onLog) onLog('[SYSTEM] Heartbeat failure: Reconnecting...');
+        // Force terminate and reconnect
+        wsRef.current.close();
+        connect();
+      }
+    }, 5000);
+
+    return () => clearInterval(monitor);
   }, [token, connect]);
 
   return { 
