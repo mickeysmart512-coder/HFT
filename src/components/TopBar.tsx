@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, Bell, Settings, Terminal, X, Save } from "lucide-react";
+import { Activity, Bell, Settings, Terminal, X, Save, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 
@@ -11,9 +11,10 @@ interface TopBarProps {
   errorMsg?: string;
   className?: string;
   onCommit?: (token: string) => void;
+  onReconnect?: () => void;
 }
 
-export function TopBar({ price, balance = 0, status, errorMsg, onCommit, className }: TopBarProps) {
+export function TopBar({ price, balance = 0, status, errorMsg, onCommit, onReconnect, className }: TopBarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [secondsAgo, setSecondsAgo] = useState(0);
@@ -92,6 +93,14 @@ export function TopBar({ price, balance = 0, status, errorMsg, onCommit, classNa
           </div>
           {pulse && <div className="w-1.5 h-1.5 rounded-full bg-brand-green animate-ping absolute right-2"></div>}
         </div>
+
+        <button 
+          onClick={onReconnect}
+          className="p-2 rounded-md bg-back-base border border-border-card hover:border-brand-neon transition-colors text-fore-muted hover:text-brand-neon"
+          title="Force Reconnect WebSocket"
+        >
+          <RefreshCw className={cn("w-4 h-4", status === 'AUTH' && "animate-spin")} />
+        </button>
         
         <div className="flex items-center gap-2 bg-back-base px-4 py-2 rounded-md border border-border-card shadow-inner">
           <span className="text-[10px] text-fore-muted font-bold uppercase tracking-tighter">Balance:</span>

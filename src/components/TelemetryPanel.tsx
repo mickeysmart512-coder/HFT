@@ -99,7 +99,11 @@ export function TelemetryPanel({ bias, signal, confidence, reasoning, logs, reso
           <h3 className="text-[9px] font-bold text-fore-muted uppercase tracking-widest">Upcoming Market Events</h3>
         </div>
         <div className="space-y-2">
-          {upcomingHighImpact.length === 0 ? (
+          {newsEvents.some(e => e.title === 'FETCH_ERROR') ? (
+            <div className="text-[9px] text-brand-red font-bold font-mono py-1 text-center uppercase animate-pulse">
+              [NEWS ERROR] FAILED TO SYNC CALENDAR
+            </div>
+          ) : upcomingHighImpact.length === 0 ? (
             <div className="text-[9px] text-fore-muted/40 font-mono py-1 text-center uppercase tracking-tighter">No High-Impact News Scheduled</div>
           ) : (
             upcomingHighImpact.map((event, i) => (

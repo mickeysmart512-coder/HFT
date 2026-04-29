@@ -32,9 +32,10 @@ export async function fetchHighImpactNews(): Promise<NewsEvent[]> {
       forecast: event.forecast,
       previous: event.previous
     }));
-  } catch (error) {
-    console.error('[News Filter Error]', error);
-    return []; // Return empty if failed
+  } catch (error: any) {
+    console.error('[NEWS ERROR]', error);
+    // Return a special object indicating a fetch failure
+    return [{ title: 'FETCH_ERROR', country: 'USD', date: new Date().toISOString(), impact: 'High', forecast: '', previous: '' }] as any;
   }
 }
 

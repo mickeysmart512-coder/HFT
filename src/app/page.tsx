@@ -49,6 +49,14 @@ export default function Home() {
       } catch (e) {}
     }
     
+    // Env Var Diagnostic
+    const envStatus = {
+      GEMINI: !!process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'MISSING (Check Backend)',
+      DERIV: !!userSettings.token ? 'LOADED (User)' : 'MISSING (Settings)',
+    };
+    console.log('[SYSTEM] Env Diagnostic:', envStatus);
+    inference.addLog(`[System] Env Diagnostic: GEMINI=${!!process.env.GEMINI_API_KEY ? 'LOADED' : 'BACKEND_ONLY'}, DERIV=${!!userSettings.token ? 'LOADED' : 'MISSING'}`);
+
     // Final Guardrail Log
     setTimeout(() => {
       inference.addLog(`[System] Maintenance complete. Returning to NAS100 SMC Strategy. Auto-Execution is ${isAutoTrade ? 'ARMED' : 'DISABLED'}.`);
@@ -119,6 +127,10 @@ export default function Home() {
           balance={deriv.balance}
           status={deriv.status}
           errorMsg={deriv.errorMsg}
+          onReconnect={() => {
+            inference.addLog('[System] Manual Reconnect Triggered...');
+            deriv.reconnect();
+          }}
           onCommit={(token) => {
              const saved = localStorage.getItem('hft_settings');
              if (saved) setUserSettings(JSON.parse(saved));
