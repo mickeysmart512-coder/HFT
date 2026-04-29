@@ -160,13 +160,21 @@ export function useDerivAccount(token: string | null, symbol: string, onLog?: (m
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && stagnantTime > 30000) {
         console.warn('[SYSTEM] Heartbeat failure: Reconnecting...');
         if (onLog) onLog('[SYSTEM] Heartbeat failure: Reconnecting...');
-        // Force terminate and reconnect
         wsRef.current.close();
         connect();
       }
     }, 5000);
 
-    return () => clearInterval(monitor);
+    const pingInterval = setInterval(() => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({ ping: 1 }));
+      }
+    }, 15000);
+
+    return () => {
+      clearInterval(monitor);
+      clearInterval(pingInterval);
+    };
   }, [token, connect]);
 
   return { 

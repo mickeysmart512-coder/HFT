@@ -16,7 +16,12 @@ const NEWS_URL = 'https://nfs.faireconomy.media/ff_calendar_thisweek.json';
 
 export async function fetchHighImpactNews(): Promise<NewsEvent[]> {
   try {
-    const response = await fetch(NEWS_URL, { cache: 'no-store' });
+    const response = await fetch(NEWS_URL, { 
+      cache: 'no-store',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
     if (!response.ok) throw new Error(`News API returned ${response.status}`);
     
     const data = await response.json();

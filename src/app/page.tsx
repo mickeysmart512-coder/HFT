@@ -178,7 +178,7 @@ export default function Home() {
         </section>
 
         {/* Right: Telemetry Panel */}
-        <aside className="w-80 flex-none h-full overflow-hidden">
+        <aside className="w-80 flex-none h-full overflow-y-auto pr-2 custom-scrollbar">
           <TelemetryPanel 
              bias={inference.bias} 
              signal={inference.signal} 
@@ -187,7 +187,7 @@ export default function Home() {
              logs={inference.logs}
              resources={inference.resources}
              newsEvents={inference.newsEvents}
-             className="h-full"
+             className="min-h-full"
           />
         </aside>
 
